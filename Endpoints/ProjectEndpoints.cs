@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using VetleApi.Auth;
 using VetleApi.Models;
 using VetleApi.Services;
 
@@ -14,11 +15,16 @@ public static class ProjectEndpoints
     {
         var group = app.MapGroup("/api/projects").WithTags("Projects");
 
+        // Public: anyone can read projects.
         group.MapGet("/", GetAll).WithName("GetProjects");
         group.MapGet("/{id}", GetById).WithName("GetProjectById");
-        group.MapPost("/", Create).WithName("CreateProject");
-        group.MapPut("/{id}", Update).WithName("UpdateProject");
-        group.MapDelete("/{id}", Delete).WithName("DeleteProject");
+
+        // Protected: a nested group with the same prefix, where every route requires the Owner policy.
+        // Putting the requirement on the group means a new write endpoint can't be left unprotected by accident.
+        var owner = group.MapGroup("").RequireAuthorization(AuthPolicies.Owner);
+        owner.MapPost("/", Create).WithName("CreateProject");
+        owner.MapPut("/{id}", Update).WithName("UpdateProject");
+        owner.MapDelete("/{id}", Delete).WithName("DeleteProject");
 
         return group;
     }

@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using VetleApi.Auth;
 using VetleApi.Configuration;
 using VetleApi.Endpoints;
 using VetleApi.Services;
@@ -24,6 +26,20 @@ builder.Services.AddSingleton<IMongoClient>(sp =>
 
 builder.Services.AddSingleton<IProjectService, ProjectService>();
 
+// Authentication: identify the caller by the X-Api-Key header (see Auth/ApiKeyAuthenticationHandler.cs).
+builder.Services.AddOptions<ApiKeySettings>()
+    .Bind(builder.Configuration.GetSection(ApiKeySettings.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services.AddAuthentication(ApiKeyAuthenticationHandler.SchemeName)
+    .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(
+        ApiKeyAuthenticationHandler.SchemeName, configureOptions: null);
+
+// Authorization: the "Owner" policy requires an authenticated caller (a valid API key).
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy(AuthPolicies.Owner, policy => policy.RequireAuthenticatedUser());
+
 // Allow the Angular app to call the API from the browser. Origins come from config.
 const string FrontendCorsPolicy = "Frontend";
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
@@ -44,7 +60,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors(FrontendCorsPolicy);
+app.UseCors(FrontendCorsPolicy); // before auth, so browser preflight (OPTIONS) requests aren't rejected
+app.UseAuthentication();         // who are you? (reads X-Api-Key)
+app.UseAuthorization();          // are you allowed? (checks the endpoint's policy)
 
 // ---------- Endpoints ----------
 

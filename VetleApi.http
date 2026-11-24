@@ -1,4 +1,7 @@
-@VetleApi_HostAddress = http://localhost:5119
+﻿@VetleApi_HostAddress = http://localhost:5119
+# Write requests need the API key. It is read from the VETLE_API_KEY environment variable,
+# so the key itself is never stored in this (committed) file.
+@ApiKey = {{$processEnv VETLE_API_KEY}}
 
 ### Health check
 GET {{VetleApi_HostAddress}}/api/health
@@ -9,6 +12,7 @@ Accept: application/json
 
 ### Create a project
 POST {{VetleApi_HostAddress}}/api/projects
+X-Api-Key: {{ApiKey}}
 Content-Type: application/json
 
 {
@@ -23,6 +27,7 @@ GET {{VetleApi_HostAddress}}/api/projects/REPLACE_WITH_ID
 
 ### Update a project
 PUT {{VetleApi_HostAddress}}/api/projects/REPLACE_WITH_ID
+X-Api-Key: {{ApiKey}}
 Content-Type: application/json
 
 {
@@ -33,9 +38,11 @@ Content-Type: application/json
 
 ### Delete a project
 DELETE {{VetleApi_HostAddress}}/api/projects/REPLACE_WITH_ID
+X-Api-Key: {{ApiKey}}
 
 ### Validation failure example (expect 400)
 POST {{VetleApi_HostAddress}}/api/projects
+X-Api-Key: {{ApiKey}}
 Content-Type: application/json
 
 {
@@ -43,3 +50,6 @@ Content-Type: application/json
   "description": "missing title",
   "repositoryUrl": "not-a-url"
 }
+
+### Missing API key (expect 401)
+DELETE {{VetleApi_HostAddress}}/api/projects/REPLACE_WITH_ID
