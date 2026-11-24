@@ -1,6 +1,45 @@
 @VetleApi_HostAddress = http://localhost:5119
 
-GET {{VetleApi_HostAddress}}/weatherforecast/
+### Health check
+GET {{VetleApi_HostAddress}}/api/health
+
+### List projects
+GET {{VetleApi_HostAddress}}/api/projects
 Accept: application/json
 
-###
+### Create a project
+POST {{VetleApi_HostAddress}}/api/projects
+Content-Type: application/json
+
+{
+  "title": "Personal website",
+  "description": "Angular + ASP.NET Core + MongoDB portfolio site.",
+  "tags": ["angular", "dotnet", "mongodb"],
+  "repositoryUrl": "https://github.com/HomandoBruther/vetle-backend"
+}
+
+### Get one project (paste an id from the list/create response)
+GET {{VetleApi_HostAddress}}/api/projects/REPLACE_WITH_ID
+
+### Update a project
+PUT {{VetleApi_HostAddress}}/api/projects/REPLACE_WITH_ID
+Content-Type: application/json
+
+{
+  "title": "Personal website (v2)",
+  "description": "Now with a real API.",
+  "tags": ["angular", "dotnet"]
+}
+
+### Delete a project
+DELETE {{VetleApi_HostAddress}}/api/projects/REPLACE_WITH_ID
+
+### Validation failure example (expect 400)
+POST {{VetleApi_HostAddress}}/api/projects
+Content-Type: application/json
+
+{
+  "title": "",
+  "description": "missing title",
+  "repositoryUrl": "not-a-url"
+}

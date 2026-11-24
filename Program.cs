@@ -1,41 +1,54 @@
+using Microsoft.Extensions.Options;
+using MongoDB.Driver;
+using VetleApi.Configuration;
+using VetleApi.Endpoints;
+using VetleApi.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+// ---------- Services (dependency injection registrations) ----------
+
 builder.Services.AddOpenApi();
+builder.Services.AddProblemDetails(); // errors are returned as standard RFC 9457 JSON
+builder.Services.AddValidation();     // checks [Required], [Url] and similar attributes on request DTOs
+
+// Bind the "MongoDb" config section to MongoDbSettings and fail at startup if it is missing.
+builder.Services.AddOptions<MongoDbSettings>()
+    .Bind(builder.Configuration.GetSection(MongoDbSettings.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+// MongoClient is thread-safe and holds a connection pool: create ONE for the whole app.
+builder.Services.AddSingleton<IMongoClient>(sp =>
+    new MongoClient(sp.GetRequiredService<IOptions<MongoDbSettings>>().Value.ConnectionString));
+
+builder.Services.AddSingleton<IProjectService, ProjectService>();
+
+// Allow the Angular app to call the API from the browser. Origins come from config.
+const string FrontendCorsPolicy = "Frontend";
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+builder.Services.AddCors(options =>
+    options.AddPolicy(FrontendCorsPolicy, policy =>
+        policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod()));
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// ---------- HTTP pipeline (middleware runs in this order) ----------
+
+app.UseExceptionHandler(); // unhandled exceptions become a 500 ProblemDetails, not a stack trace
+app.UseStatusCodePages();  // empty 404/405 responses also get a ProblemDetails body
+
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi(); // OpenAPI document at /openapi/v1.json
 }
 
 app.UseHttpsRedirection();
+app.UseCors(FrontendCorsPolicy);
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+// ---------- Endpoints ----------
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+app.MapGet("/api/health", () => TypedResults.Ok(new { status = "ok" })).WithTags("Health");
+app.MapProjectEndpoints();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
