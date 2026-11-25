@@ -44,7 +44,9 @@ public sealed class ProjectService : IProjectService
         var project = new Project
         {
             Title = request.Title,
+            Summary = request.Summary,
             Description = request.Description,
+            Period = request.Period,
             Tags = request.Tags ?? [],
             RepositoryUrl = request.RepositoryUrl,
             LiveUrl = request.LiveUrl,
@@ -60,7 +62,9 @@ public sealed class ProjectService : IProjectService
 
         var update = Builders<Project>.Update
             .Set(p => p.Title, request.Title)
+            .Set(p => p.Summary, request.Summary)
             .Set(p => p.Description, request.Description)
+            .Set(p => p.Period, request.Period)
             .Set(p => p.Tags, request.Tags ?? [])
             .Set(p => p.RepositoryUrl, request.RepositoryUrl)
             .Set(p => p.LiveUrl, request.LiveUrl);

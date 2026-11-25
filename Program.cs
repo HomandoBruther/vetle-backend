@@ -51,7 +51,15 @@ var app = builder.Build();
 
 // ---------- HTTP pipeline (middleware runs in this order) ----------
 
-app.UseExceptionHandler(); // unhandled exceptions become a 500 ProblemDetails, not a stack trace
+// Unhandled exceptions become a ProblemDetails response, not a stack trace.
+// BadHttpRequestException (e.g. malformed JSON) is the client's fault, so keep its own 4xx status
+// instead of a 500. Without this, Development (which throws these on purpose) would return 500.
+app.UseExceptionHandler(new ExceptionHandlerOptions
+{
+    StatusCodeSelector = ex => ex is BadHttpRequestException bad
+        ? bad.StatusCode
+        : StatusCodes.Status500InternalServerError,
+});
 app.UseStatusCodePages();  // empty 404/405 responses also get a ProblemDetails body
 
 if (app.Environment.IsDevelopment())

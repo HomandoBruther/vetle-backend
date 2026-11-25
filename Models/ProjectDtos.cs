@@ -6,14 +6,16 @@ namespace VetleApi.Models;
 public sealed record ProjectResponse(
     string Id,
     string Title,
+    string? Summary,
     string Description,
+    string? Period,
     IReadOnlyList<string> Tags,
     string? RepositoryUrl,
     string? LiveUrl,
     DateTime CreatedAt)
 {
     public static ProjectResponse FromModel(Project p) =>
-        new(p.Id!, p.Title, p.Description, p.Tags, p.RepositoryUrl, p.LiveUrl, p.CreatedAt);
+        new(p.Id!, p.Title, p.Summary, p.Description, p.Period, p.Tags, p.RepositoryUrl, p.LiveUrl, p.CreatedAt);
 }
 
 /// <summary>
@@ -23,7 +25,9 @@ public sealed record ProjectResponse(
 /// </summary>
 public sealed record ProjectRequest(
     [property: Required, StringLength(100, MinimumLength = 1)] string Title,
-    [property: Required, StringLength(2000)] string Description,
+    [property: Required, StringLength(5000)] string Description,
+    [property: StringLength(300)] string? Summary,
+    [property: StringLength(50)] string? Period,
     List<string>? Tags,
     [property: Url] string? RepositoryUrl,
     [property: Url] string? LiveUrl);
