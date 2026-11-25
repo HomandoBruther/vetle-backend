@@ -47,6 +47,7 @@ public sealed class ProjectService : IProjectService
             Summary = request.Summary,
             Description = request.Description,
             Period = request.Period,
+            ImageUrl = request.ImageUrl,
             Tags = request.Tags ?? [],
             RepositoryUrl = request.RepositoryUrl,
             LiveUrl = request.LiveUrl,
@@ -65,6 +66,7 @@ public sealed class ProjectService : IProjectService
             .Set(p => p.Summary, request.Summary)
             .Set(p => p.Description, request.Description)
             .Set(p => p.Period, request.Period)
+            .Set(p => p.ImageUrl, request.ImageUrl)
             .Set(p => p.Tags, request.Tags ?? [])
             .Set(p => p.RepositoryUrl, request.RepositoryUrl)
             .Set(p => p.LiveUrl, request.LiveUrl);

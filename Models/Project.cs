@@ -30,6 +30,12 @@ public sealed class Project
 
     /// <summary>When the project happened, as free text, e.g. "2025" or "2024 – present". Not the same as CreatedAt.</summary>
     public string? Period { get; set; }
+    /// <summary>
+    /// Thumbnail shown on the card and detail page. Usually a path to a file in the frontend's
+    /// public/images/projects folder, e.g. "/images/projects/unity-car-game.webp".
+    /// </summary>
+    public string? ImageUrl { get; set; }
+
     public List<string> Tags { get; set; } = [];
     public string? RepositoryUrl { get; set; }
     public string? LiveUrl { get; set; }
